@@ -7,12 +7,12 @@
   <extension point="xbmc.service" library="default.py" start="login"></extension>
   <extension point="xbmc.addon.metadata">
     <summary lang="en">XBMC check previous episode state</summary>
-    <summary lang="bg">Проверява състоянието на предходния епизод</summary>
+    <summary lang="bg">Изгледан ли е предходния епизод</summary>
     <description lang="en">This scripts checks the previous episode from the one you started to watch and warns you if it is missing from your library or unwatched!</description>
     <description lang="de">Dieses Script überprüft die vorige Episode der TV Show die gerade gestartet werden soll und warnt falls diese noch nicht gesehen wurde oder nicht vorhanden ist!</description>
     <description lang="bg">Когато пускате епизод от даден сериал скриптът проверява предходния и предупреждава ако той отсъства от библиотеката или не е изгледан.</description>
     <platform>all</platform>
-    <language>en</language>    
+    <language>en</language>
     <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
     <forum>http://forum.xbmc.org/showthread.php?tid=151531</forum>
     <website>https://kodi.wiki/view/Add-on:XBMC_Check_Previous_Episode</website>
