@@ -47,3 +47,7 @@ msgstr "Желаете ли да прегледате списъка с епиз
 msgctxt "#32008"
 msgid "Show Option to browse the show"
 msgstr "Запитване за отваряне на списъка с епизоди от сериала"
+
+msgctxt "#32009"
+msgid "Warn only if previous episode is actually found in your library and unwatched?"
+msgstr "Предупреждаване само ако предходния епизод е в библиотеката и не е изгледан?"
