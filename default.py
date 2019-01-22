@@ -23,26 +23,30 @@ def getSetting(setting):
 
 log( "[%s] - Version: %s Started" % (__scriptname__,__version__))
 
+# Odd this is needed, it should be a testable state on Player really...
+def isPlaybackPaused():
+    return bool(xbmc.getCondVisibility("Player.Paused"))
+
 
 # Check if the previous episode is present, and if so if it has been watched
 def checkPreviousEpisode():
 
-    log('Playback started!')
+    #log('Playback started!')
     command='{"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": 1}'
     jsonobject = json.loads(xbmc.executeJSONRPC(command))
     
-    log(str(jsonobject))
+    #log(str(jsonobject))
 
     if(len(jsonobject['result']) == 1):
     
         resultitem = jsonobject['result'][0]
-        log("Player running with ID: %d" % resultitem['playerid'])
+        #log("Player running with ID: %d" % resultitem['playerid'])
         
         command='{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "playerid": %d }, "id": 1}' % resultitem['playerid']
         jsonobject = json.loads(xbmc.executeJSONRPC(command))
         
         if(jsonobject['result']['item']['type'] == 'episode'):
-            log("An Episode is playing!")
+            #log("An Episode is playing!")
             
             command='{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": { "episodeid": %d, "properties": ["tvshowid", "season", "episode"] }, "id": 1}' % jsonobject['result']['item']['id']
             jsonobject = json.loads(xbmc.executeJSONRPC(command))
@@ -51,7 +55,7 @@ def checkPreviousEpisode():
                 playingTvshowid = jsonobject['result']['episodedetails']['tvshowid']
                 playingSeason = jsonobject['result']['episodedetails']['season']
                 playingEpisode = jsonobject['result']['episodedetails']['episode']
-                log("Playing Info: TVSHOWID '%d', SEASON: '%d', EPISODE: '%d'" % (jsonobject['result']['episodedetails']['tvshowid'], jsonobject['result']['episodedetails']['season'], jsonobject['result']['episodedetails']['episode']))
+                #log("Playing Info: TVSHOWID '%d', SEASON: '%d', EPISODE: '%d'" % (jsonobject['result']['episodedetails']['tvshowid'], jsonobject['result']['episodedetails']['season'], jsonobject['result']['episodedetails']['episode']))
             
                 #Lets see if we have the previous episode
                 if(jsonobject['result']['episodedetails']['episode'] > 1): #debuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuug
@@ -59,20 +63,20 @@ def checkPreviousEpisode():
                     jsonobject = json.loads(xbmc.executeJSONRPC(command))
                     
                     if(len(jsonobject['result']) > 0):
-                        log("Finding...")
+                        #log("Finding...")
                         found = False
                         playcount = 0
                         for episode in jsonobject['result']['episodes']:
                             if(episode['episode'] == (playingEpisode - 1)):
-                                log("FOUND!")
+                                #log("FOUND!")
                                 playcount += episode['playcount']
                                 found = True
                         
                         if (not found and getSetting("IgnoreIfEpisodeAbsentFromLibrary").lower() != 'true') or (found and playcount == 0):
                             
                             # Only trigger the pause if the player is actually playing as other addons may also have paused the player
-                            if xbmc.Player().isPlaying: 
-                                log("Pausing playback!")                           
+                            if not isPlaybackPaused(): 
+                                #log("Pausing playback!")                           
                                 xbmc.Player().pause()
 
                             if not found:
@@ -82,7 +86,7 @@ def checkPreviousEpisode():
                             
                             if playon:
                                  # Only trigger unpause if the player is actually not playing
-                                if not xbmc.Player().isPlaying:
+                                if isPlaybackPaused():
                                     xbmc.Player().pause()
                             else:
                                 if(getSetting("BrowseForShow").lower() == "true"):
@@ -116,16 +120,14 @@ class MyPlayer( xbmc.Player ):
 
 # Initial setup
 
+# # Kodi Krypton and below:
+# if __version__ < 17.9:
+#     log('Kodi ' + __version__ + ', listen to onPlayBackStarted')
+
+# # Kodi Leia and above:
+# else:
+#     log('Kodi ' + __version__ + ', listen to onAVStarted')
+
 player_monitor = MyPlayer()
-
-# Kodi Krypton and below:
-if __version__ < 17.9:
-    log('Kodi ' + __version__ + ', listen to onPlayBackStarted')
-
-# Kodi Leia and above:
-else:
-    log('Kodi ' + __version__ + ', listen to onAVStarted')
-
-
 while not xbmc.abortRequested:
       xbmc.sleep(100)
