@@ -3,6 +3,7 @@ import xbmcaddon
 import xbmcgui
 import os
 import json
+import yaml
 
 __addon__ = xbmcaddon.Addon()
 __cwd__ = __addon__.getAddonInfo('path')
@@ -11,10 +12,14 @@ __version__ = __addon__.getAddonInfo('version')
 __kodiversion__ = float(xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')[0:4])
 __icon__ = __addon__.getAddonInfo('icon')
 __ID__ = __addon__.getAddonInfo('id')
+__ignoredshowsfile__ = xbmc.translatePath("special://profile/addon_data/" + __ID__ + "/ignoredshows.yaml")
 __language__ = __addon__.getLocalizedString
 
 global g_jumpBackSecs
+global g_ignoredShows
+
 g_jumpBackSecs = 0
+
 
 def log(msg):
     xbmc.log("### [%s] - %s" % (__scriptname__,msg,),level=xbmc.LOGDEBUG )
@@ -26,34 +31,43 @@ def getSetting(setting):
 def isPlaybackPaused():
     return bool(xbmc.getCondVisibility("Player.Paused"))
 
+def setShowAsIgnored(tvshowtitle, tvshowid):
+    log("Set show title " + tvshowtitle + ", id [" + str(tvshowid) + "], to ignore from now on.")
+    g_ignoredShows = {'tvshowid':'tvshowtitle'}
+    with open('__ignoredshowsfile__', 'w') as yaml_file:
+        yaml.dump(g_ignoredShows, yaml_file, default_flow_style=False)
+
 # Check if the previous episode is present, and if so if it has been watched
 def checkPreviousEpisode():
 
-    #log('Playback started!')
+    log('Playback started!')
     command='{"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": 1}'
     jsonobject = json.loads(xbmc.executeJSONRPC(command))
     
-    #log(str(jsonobject))
+    log(str(jsonobject))
 
     if(len(jsonobject['result']) == 1):
     
         resultitem = jsonobject['result'][0]
-        #log("Player running with ID: %d" % resultitem['playerid'])
+        log("Player running with ID: %d" % resultitem['playerid'])
         
         command='{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "playerid": %d }, "id": 1}' % resultitem['playerid']
         jsonobject = json.loads(xbmc.executeJSONRPC(command))
         
         if(jsonobject['result']['item']['type'] == 'episode'):
-            #log("An Episode is playing!")
+            log("An Episode is playing!")
             
-            command='{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": { "episodeid": %d, "properties": ["tvshowid", "season", "episode"] }, "id": 1}' % jsonobject['result']['item']['id']
+            command='{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": { "episodeid": %d, "properties": ["tvshowid", "showtitle", "season", "episode"] }, "id": 1}' % jsonobject['result']['item']['id']
             jsonobject = json.loads(xbmc.executeJSONRPC(command))
             
+            log(jsonobject)
+
             if(len(jsonobject['result']) == 1):
                 playingTvshowid = jsonobject['result']['episodedetails']['tvshowid']
+                playingTvshowTitle = jsonobject['result']['episodedetails']['showtitle']
                 playingSeason = jsonobject['result']['episodedetails']['season']
                 playingEpisode = jsonobject['result']['episodedetails']['episode']
-                #log("Playing Info: TVSHOWID '%d', SEASON: '%d', EPISODE: '%d'" % (jsonobject['result']['episodedetails']['tvshowid'], jsonobject['result']['episodedetails']['season'], jsonobject['result']['episodedetails']['episode']))
+                log("Playing Info: SHOWTITLE '%s', TVSHOWID '%d', SEASON: '%d', EPISODE: '%d'" % (playingTvshowTitle, playingTvshowid, playingSeason, playingEpisode))
             
                 #Lets see if we have the previous episode
                 if(jsonobject['result']['episodedetails']['episode'] > 1): #debuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuug
@@ -79,11 +93,24 @@ def checkPreviousEpisode():
                                 #log("Pausing playback!")                           
                                 xbmc.Player().pause()
 
-                            if not found:
-                                playon = xbmcgui.Dialog().yesno(__language__(32001), __language__(32002), __language__(32003))
+                            # if not found:
+                            #     playon = xbmcgui.Dialog().yesno(__language__(32001), __language__(32002), __language__(32003))
+                            # else:
+                            #     playon = xbmcgui.Dialog().yesno(__language__(32004), __language__(32005), __language__(32003))                            
+
+                            result = xbmcgui.Dialog().select('Previous episode not watched!  Play on?', ['Yes', 'No', 'Yes - and from now on, ignore this show'], preselect=1)
+
+                            log("Result is")
+                            log(result)
+
+                            if (result==0 or result==2):
+                                playon = True
                             else:
-                                playon = xbmcgui.Dialog().yesno(__language__(32004), __language__(32005), __language__(32003))
-                            
+                                playon = False
+
+                            if result==2:
+                                setShowAsIgnored(playingTvshowTitle, playingTvshowid)
+
                             if playon:
                                  # Only trigger unpause if the player is actually not playing
                                 if isPlaybackPaused():
@@ -127,6 +154,10 @@ if __kodiversion__ < 17.9:
 # Kodi Leia and above:
 else:
     log('Kodi ' + str(__kodiversion__) + ', listen to onAVStarted')
+
+g_ignoredShows = yaml.load(__ignoredshowsfile__)
+log("Ignored Shows List:")
+log(g_ignoredShows)
 
 player_monitor = MyPlayer()
 while not xbmc.abortRequested:
