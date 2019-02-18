@@ -49,5 +49,17 @@ msgid "Show option to browse the show"
 msgstr ""
 
 msgctxt "#32009"
-msgid "Warn only if previous episode found in your library and unwatched?"
+msgid "Warn only if previous episode actually found in library and unwatched?"
+msgstr ""
+
+msgctxt "#32010"
+msgid "Browse show in library after playback prevention?"
+msgstr ""
+
+msgctxt "#32011"
+msgid "Remove show from ignored list..."
+msgstr ""
+
+msgctxt "#32012"
+msgid "No ignored shows to manage!"
 msgstr ""
