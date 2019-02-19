@@ -4,6 +4,8 @@ import xbmcgui
 import os
 import json
 import yaml
+from distutils.util import strtobool
+
 from traceback import format_exc
 
 __addon__ = xbmcaddon.Addon()
@@ -16,11 +18,14 @@ __ID__ = __addon__.getAddonInfo('id')
 __ignoredshowsfile__ = xbmc.translatePath("special://profile/addon_data/" + __ID__ + "/ignoredShows.yaml")
 __language__ = __addon__.getLocalizedString
 
-def log(msg):
-    xbmc.log("### [%s] - %s" % (__scriptname__,msg,),level=xbmc.LOGDEBUG )
+def log(msg, level=xbmc.LOGDEBUG):
+    xbmc.log("### [%s] - %s" % (__scriptname__,msg,),level )
 
 def getSetting(setting):
     return __addon__.getSetting(setting).strip()
+
+def getSettingAsBoolean(setting):
+    return bool(strtobool(str(__addon__.getSetting(setting)).lower()))
 
 # Odd this is needed, it should be a testable state on Player really...
 def isPlaybackPaused():
@@ -28,28 +33,28 @@ def isPlaybackPaused():
 
 def getIgnoredShowsFromConfig():
 
+    # By default, no shows are ignored
     ignoredShows = {}
 
     # Update our internal list of ignored shows if there are any...
     if os.path.exists(__ignoredshowsfile__):
-        log("Loading ignored shows from " + __ignoredshowsfile__)
+        log("Loading ignored shows from config file: " + __ignoredshowsfile__)
         with open(__ignoredshowsfile__, 'r') as yaml_file:
             ignoredShows = yaml.load(yaml_file)
 
-    log("Ignored Shows from config is: " + str(ignoredShows))
+    log("Ignored Shows loaded from config is: " + str(ignoredShows))
+    
     return ignoredShows;            
 
 
 def writeIgnoredShowsToConfig(ignoredShows, tvshowtitle=None, tvshowid=None):
-    
-    
-    
+        
     # Add new show to our dict of ignored shows if there is one...
     if tvshowid:
         log("Set show title " + tvshowtitle + ", id [" + str(tvshowid) + "], to ignore from now on.")
         ignoredShows[tvshowid] = tvshowtitle
     
-    # ...and dump the whole dict to our yaml file
+    # ...and dump the whole dict to our yaml file (clobber over any old file)
     with open(__ignoredshowsfile__, 'w') as yaml_file:
         log("Ignored Shows to write to config is: " + str(ignoredShows))
         yaml.dump(ignoredShows, yaml_file, default_flow_style=False)
@@ -63,8 +68,7 @@ def checkPreviousEpisode():
 
     log('Playback started!')
     command='{"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": 1}'
-    jsonobject = json.loads(xbmc.executeJSONRPC(command))
-    
+    jsonobject = json.loads(xbmc.executeJSONRPC(command))    
     log(str(jsonobject))
 
     # Only do something is we get a result for our query back from Kodi
@@ -75,7 +79,8 @@ def checkPreviousEpisode():
         
         command='{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "playerid": %d }, "id": 1}' % resultitem['playerid']
         jsonobject = json.loads(xbmc.executeJSONRPC(command))
-        
+        log(str(jsonobject))
+
         # Only do something is this is an episode of a TV show
         if(jsonobject['result']['item']['type'] == 'episode'):
             
@@ -83,7 +88,7 @@ def checkPreviousEpisode():
             
             command='{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": { "episodeid": %d, "properties": ["tvshowid", "showtitle", "season", "episode"] }, "id": 1}' % jsonobject['result']['item']['id']
             jsonobject = json.loads(xbmc.executeJSONRPC(command))
-            log(jsonobject)
+            log(str(jsonobject))
 
             # Only do something if we can get the episode details from Kodi
             if(len(jsonobject['result']) == 1):
@@ -99,31 +104,30 @@ def checkPreviousEpisode():
              
                     command='{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodes", "params": { "tvshowid": %d, "season": %d, "properties": ["episode", "playcount"] }, "id": 1}' % (jsonobject['result']['episodedetails']['tvshowid'], jsonobject['result']['episodedetails']['season'])
                     jsonobject = json.loads(xbmc.executeJSONRPC(command))
-                    
+                    log(str(jsonobject))
+
                     # We found some episodes for this show...
                     if(len(jsonobject['result']) > 0):
-                        #log("Finding...")
                         found = False
                         playcount = 0
                         for episode in jsonobject['result']['episodes']:
                             if(episode['episode'] == (playingEpisode - 1)):
-                                #log("FOUND!")
                                 playcount += episode['playcount']
                                 found = True
                         
-                        #log("Found: " + str(found) + " playcount: " + str(playcount)) 
+                        log("Found: " + str(found) + " playcount: " + str(playcount) + " setting IgnoreIfEpisodeAbsentFromLibrary " + str(getSetting("IgnoreIfEpisodeAbsentFromLibrary"))) 
 
-                        if (not found and getSetting("IgnoreIfEpisodeAbsentFromLibrary").lower() != 'true') or (found and playcount == 0):
+                        if (not found and getSettingAsBoolean("IgnoreIfEpisodeAbsentFromLibrary") != True) or (found and playcount == 0):
 
                             if playingTvshowid in ignoredShows:
                                 log("Unplayed previous episode detected, but show set to ignore: " + playingTvshowTitle)
                             else:
                                 # Only trigger the pause if the player is actually playing as other addons may also have paused the player
                                 if not isPlaybackPaused(): 
-                                    #log("Pausing playback!")                           
+                                    log("Pausing playback")                           
                                     xbmc.Player().pause()
 
-                                result = xbmcgui.Dialog().select('Previous episode not watched!  Play on?', ['No','Yes', 'Yes - and from now on, ignore this show'], preselect=0)
+                                result = xbmcgui.Dialog().select(__language__(32020),[__language__(32021),__language__(32022),__language__(32023)], preselect=0)
 
                                 # User has requested we ignore this particular show from now on...
                                 if result==2:
@@ -131,15 +135,18 @@ def checkPreviousEpisode():
 
                                 if (result==1 or result==2):
                                     if isPlaybackPaused():
+                                        log("Unpausing playback")
                                         xbmc.Player().pause()
                                 else:
                                     xbmc.Player().stop()
 
-                                    if(getSetting("BrowseForShow").lower() == "true"):                                    
+                                    if(getSettingAsBoolean("BrowseForShow") == True):                                    
                                         # Jump to this shows Episode in the Kodi library
                                         command='{"jsonrpc": "2.0", "method": "GUI.ActivateWindow", "params": { "window": "videos", "parameters": [ "videodb://2/2/%d/%d" ] }, "id": 1}' % (playingTvshowid, playingSeason)
                                         xbmc.executeJSONRPC( command )
 
+
+# Manage ignored shows in settings..
 def manageIgnored():
 
     log("Managing ignored shows...")
@@ -149,7 +156,7 @@ def manageIgnored():
     ignoredShows = getIgnoredShowsFromConfig()
 
     if len(ignoredShows) < 1:
-        dialog.notification(__scriptname__, __language__(32012) , xbmcgui.NOTIFICATION_INFO, 5000)
+        dialog.notification(__scriptname__, __language__(32060) , xbmcgui.NOTIFICATION_INFO, 5000)
     else:        
 
         # Convert our dict to a list for the dialog...
@@ -168,7 +175,7 @@ def manageIgnored():
                 ignoredShows.pop(key, None)
                 log("Ignored shows  after removal is: " + str(ignoredShows))
 
-                # No ignored shows?  Delete the empty file..
+                # No ignored shows?  Clean up & delete the empty file..
                 if len(ignoredShows) == 0:
                     if os.path.exists(__ignoredshowsfile__):
                         os.remove(__ignoredshowsfile__)                
@@ -178,12 +185,10 @@ def manageIgnored():
 
 
 # Listen to appropriate events for different Kodi versions
-
 class MyPlayer( xbmc.Player ):
 
     def __init__( self, *args, **kwargs ):
         xbmc.Player.__init__( self )
-        log('MyPlayer - init ')
 
     def onPlayBackStarted( self ):
         if __kodiversion__ < 17.9:
@@ -193,10 +198,8 @@ class MyPlayer( xbmc.Player ):
         if __kodiversion__ >= 17.9:
             checkPreviousEpisode()
 
-# RUNMODES - we're either running as a service, or we're running the tool to manage ignored shows..
 
-# Initial setup
-ignoredShows = {}
+# RUNMODES - we're either running as a service, or we're running the tool to manage ignored shows..
 
 ### MANAGE IGNORED SHOWS
 if len(sys.argv) > 1:
@@ -207,16 +210,16 @@ if len(sys.argv) > 1:
     except Exception as inst:
         log("Exception in ManageIgnored: " + format_exc(inst))
 
-###  RUNNING AS A SERVICE
+### DEFAULT - RUNN AS A SERVICE & WATCH PLAYBACK EVENTS
 else:
 
-    log( "Version: %s Started" % (__version__))
+    log( "Version: %s Started" % (__version__), xbmc.LOGNOTICE)
     # # Kodi Krypton and below:
     if __kodiversion__ < 17.9:
-        log('Kodi ' + str(__kodiversion__) + ', listen to onPlayBackStarted')
+        log('Kodi ' + str(__kodiversion__) + ', listen to onPlayBackStarted', xbmc.LOGNOTICE)
     # Kodi Leia and above:
     else:
-        log('Kodi ' + str(__kodiversion__) + ', listen to onAVStarted')
+        log('Kodi ' + str(__kodiversion__) + ', listen to onAVStarted', xbmc.LOGNOTICE)
 
     player_monitor = MyPlayer()
     while not xbmc.abortRequested:
