@@ -36,7 +36,7 @@ msgstr ""
 
 
 msgctxt "#32050"
-msgid "Browse to show in library after playback prevention?"
+msgid "Force Kodi to browse to show in library after playback prevention?"
 msgstr ""
 
 msgctxt "#32051"

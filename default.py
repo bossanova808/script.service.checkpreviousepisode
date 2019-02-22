@@ -140,7 +140,7 @@ def checkPreviousEpisode():
                                 else:
                                     xbmc.Player().stop()
 
-                                    if(getSettingAsBoolean("BrowseForShow") == True):                                    
+                                    if(getSettingAsBoolean("ForceBrowseForShow") == True):                                    
                                         # Jump to this shows Episode in the Kodi library
                                         command='{"jsonrpc": "2.0", "method": "GUI.ActivateWindow", "params": { "window": "videos", "parameters": [ "videodb://2/2/%d/%d" ] }, "id": 1}' % (playingTvshowid, playingSeason)
                                         xbmc.executeJSONRPC( command )
@@ -210,7 +210,7 @@ if len(sys.argv) > 1:
     except Exception as inst:
         log("Exception in ManageIgnored: " + format_exc(inst))
 
-### DEFAULT - RUNN AS A SERVICE & WATCH PLAYBACK EVENTS
+### DEFAULT - RUN AS A SERVICE & WATCH PLAYBACK EVENTS
 else:
 
     log( "Version: %s Started" % (__version__), xbmc.LOGNOTICE)
