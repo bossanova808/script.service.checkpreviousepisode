@@ -19,7 +19,7 @@ __ignoredshowsfile__ = xbmc.translatePath("special://profile/addon_data/" + __ID
 __language__ = __addon__.getLocalizedString
 
 def log(msg, level=xbmc.LOGDEBUG):
-    xbmc.log("### [%s] - %s" % (__scriptname__,msg,),level )
+    xbmc.log(("### [%s] - %s" % (__scriptname__,msg,)).encode("utf-8"),level )
 
 def getSetting(setting):
     return __addon__.getSetting(setting).strip()
