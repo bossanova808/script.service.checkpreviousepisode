@@ -1,6 +1,27 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<settings>
-  <setting id="ForceBrowseForShow" type="bool" label="32050" default="false"/>
-  <setting id="IgnoreIfEpisodeAbsentFromLibrary" type="bool" label="32051" default="false"/>
-  <setting id="ManageIgnored" label="32052" type="action" action="RunScript($ID,ManageIgnored)"/>    
+<?xml version="1.0" ?>
+<settings version="1">
+	<section id="script.service.checkpreviousepisode">
+		<category help="" id="default" label="32061">
+			<group id="1">
+				<setting help="" id="ForceBrowseForShow" label="32050" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="IgnoreIfEpisodeAbsentFromLibrary" label="32051" type="boolean">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting help="" id="ManageIgnored" label="32052" type="action">
+					<level>0</level>
+					<data>RunScript(script.service.checkpreviousepisode,ManageIgnored)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control format="action" type="button"/>
+				</setting>
+			</group>
+		</category>
+	</section>
 </settings>
