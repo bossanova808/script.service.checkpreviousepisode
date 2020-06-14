@@ -18,15 +18,15 @@ __kodiversion__ = float(xbmcaddon.Addon(
 __icon__ = __addon__.getAddonInfo('icon')
 __ID__ = __addon__.getAddonInfo('id')
 __profile__ = xbmc.translatePath(
-    __addon__.getAddonInfo('profile')).decode("utf-8")
+    __addon__.getAddonInfo('profile'))
 __ignoredshowsfile__ = xbmc.translatePath(os.path.join(
-    __profile__, 'ignoredShows.yaml')).decode("utf-8")
+    __profile__, 'ignoredShows.yaml'))
 __language__ = __addon__.getLocalizedString
 monitor = xbmc.Monitor()
 
 
 def log(msg, level=xbmc.LOGDEBUG):
-    xbmc.log(("### [%s] - %s" % (__scriptname__, msg,)).encode("utf-8"), level)
+    xbmc.log(("### [%s] - %s" % (__scriptname__, msg,)), level)
 
 
 def getSetting(setting):
