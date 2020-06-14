@@ -185,7 +185,7 @@ def manageIgnored():
 
         # Convert our dict to a list for the dialog...
         ignoredlist = []
-        for key, value in ignoredShows.items():
+        for key, value in list(ignoredShows.items()):
             ignoredlist.append(value)
 
         if ignoredlist != []:
@@ -216,13 +216,8 @@ class MyPlayer(xbmc.Player):
     def __init__(self, *args, **kwargs):
         xbmc.Player.__init__(self)
 
-    def onPlayBackStarted(self):
-        if __kodiversion__ < 17.9:
-            checkPreviousEpisode()
-
     def onAVStarted(self):
-        if __kodiversion__ >= 17.9:
-            checkPreviousEpisode()
+        checkPreviousEpisode()
 
 
 # RUNMODES - we're either running as a service, or we're running the tool to manage ignored shows..
@@ -238,16 +233,8 @@ if len(sys.argv) > 1:
 
 # DEFAULT - RUN AS A SERVICE & WATCH PLAYBACK EVENTS
 else:
-
-    log("Version: %s Started" % (__version__), xbmc.LOGNOTICE)
-    # # Kodi Krypton and below:
-    if __kodiversion__ < 17.9:
-        log('Kodi ' + str(__kodiversion__) +
-            ', listen to onPlayBackStarted', xbmc.LOGNOTICE)
-    # Kodi Leia and above:
-    else:
-        log('Kodi ' + str(__kodiversion__) +
-            ', listen to onAVStarted', xbmc.LOGNOTICE)
+    log('Kodi ' + str(__kodiversion__) +
+        ', listen to onAVStarted', xbmc.LOGNOTICE)
 
     player_monitor = MyPlayer()
 
