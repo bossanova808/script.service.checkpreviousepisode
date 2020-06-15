@@ -18,8 +18,8 @@
     <forum>https://forum.kodi.tv/showthread.php?tid=151531</forum>
     <website>https://kodi.wiki/view/Add-on:XBMC_Check_Previous_Episode</website>
     <source>https://github.com/bossanova808/script.service.checkpreviousepisode</source>
+  <assets>
+     <icon>icon.png</icon>
+  </assets>
   </extension>
-   <assets>
-      <icon>icon.png</icon>
-    </assets>
 </addon>
