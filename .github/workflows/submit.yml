@@ -19,7 +19,6 @@ jobs:
           kodi-repository: repo-scripts
           kodi-version: matrix
           addon-id: script.service.checkpreviousepisode
-          kodi-matrix: true # Submit a Python 2/3 compatible addon to matrix branch in addition to the target branch
         env: # Make sure you create the below secrets (GH_TOKEN and EMAIL)
           GH_USERNAME: ${{ github.actor }}
           GH_TOKEN: ${{secrets.GH_TOKEN}}
