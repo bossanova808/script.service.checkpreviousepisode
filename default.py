@@ -13,16 +13,12 @@ __addon__ = xbmcaddon.Addon()
 __cwd__ = __addon__.getAddonInfo('path')
 __scriptname__ = __addon__.getAddonInfo('name')
 __version__ = __addon__.getAddonInfo('version')
-__kodiversion__ = float(xbmcaddon.Addon(
-    'xbmc.addon').getAddonInfo('version')[0:4])
+__kodiversion__ = float(xbmcaddon.Addon('xbmc.addon').getAddonInfo('version')[0:4])
 __icon__ = __addon__.getAddonInfo('icon')
 __ID__ = __addon__.getAddonInfo('id')
-__profile__ = xbmc.translatePath(
-    __addon__.getAddonInfo('profile'))
-__ignoredshowsfile__ = xbmc.translatePath(os.path.join(
-    __profile__, 'ignoredShows.yaml'))
+__profile__ = xbmc.translatePath(__addon__.getAddonInfo('profile'))
+__ignoredshowsfile__ = xbmc.translatePath(os.path.join(__profile__, 'ignoredShows.yaml'))
 __language__ = __addon__.getLocalizedString
-monitor = xbmc.Monitor()
 
 
 def log(msg, level=xbmc.LOGDEBUG):
@@ -36,9 +32,8 @@ def getSetting(setting):
 def getSettingAsBoolean(setting):
     return bool(strtobool(str(__addon__.getSetting(setting)).lower()))
 
+
 # Odd this is needed, it should be a testable state on Player really...
-
-
 def isPlaybackPaused():
     return bool(xbmc.getCondVisibility("Player.Paused"))
 
@@ -78,6 +73,8 @@ def writeIgnoredShowsToConfig(ignoredShows, tvshowtitle=None, tvshowid=None):
 # Check if the previous episode is present, and if so if it has been watched
 def checkPreviousEpisode():
 
+    global player_monitor
+
     ignoredShows = getIgnoredShowsFromConfig()
 
     log('Playback started!')
@@ -91,18 +88,17 @@ def checkPreviousEpisode():
         resultitem = jsonobject['result'][0]
         log("Player running with ID: %d" % resultitem['playerid'])
 
-        command = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "playerid": %d }, "id": 1}' % resultitem[
-            'playerid']
+        command = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "playerid": %d }, "id": 1}' % resultitem['playerid']
         jsonobject = json.loads(xbmc.executeJSONRPC(command))
         log(str(jsonobject))
 
         # Only do something is this is an episode of a TV show
-        if(jsonobject['result']['item']['type'] == 'episode'):
+        if jsonobject['result']['item']['type'] == 'episode':
 
             log("An Episode is playing!")
 
-            command = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": { "episodeid": %d, "properties": ["tvshowid", "showtitle", "season", "episode"] }, "id": 1}' % jsonobject[
-                'result']['item']['id']
+            command = '{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": { "episodeid": %d, "properties": ["tvshowid", "showtitle", "season", "episode"] }, "id": 1}' % (
+                jsonobject['result']['item']['id'])
             jsonobject = json.loads(xbmc.executeJSONRPC(command))
             log(str(jsonobject))
 
@@ -145,7 +141,7 @@ def checkPreviousEpisode():
                                 # Only trigger the pause if the player is actually playing as other addons may also have paused the player
                                 if not isPlaybackPaused():
                                     log("Pausing playback")
-                                    xbmc.Player().pause()
+                                    player_monitor.pause()
 
                                 result = xbmcgui.Dialog().select(__language__(32020), [__language__(
                                     32021), __language__(32022), __language__(32023)], preselect=0)
@@ -158,9 +154,9 @@ def checkPreviousEpisode():
                                 if (result == 1 or result == 2):
                                     if isPlaybackPaused():
                                         log("Unpausing playback")
-                                        xbmc.Player().pause()
+                                        player_monitor.pause()
                                 else:
-                                    xbmc.Player().stop()
+                                    player_monitor.stop()
 
                                     if(getSettingAsBoolean("ForceBrowseForShow") == True):
                                         # Jump to this shows Episode in the Kodi library
@@ -236,6 +232,7 @@ else:
     log('Kodi ' + str(__kodiversion__) +
         ', listen to onAVStarted', xbmc.LOGNOTICE)
 
+    monitor = xbmc.Monitor()
     player_monitor = MyPlayer()
 
     while not monitor.abortRequested():
