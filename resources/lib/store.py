@@ -11,7 +11,7 @@ class Store:
     # Static class variables, referred to by Store.whatever
     # https://docs.python.org/3/faq/programming.html#how-do-i-create-static-class-data-and-static-class-methods
     ignored_shows_file = None
-    ignored_shows = None
+    ignored_shows = {}
     force_browse = False
     force_all_seasons = False
     ignore_if_absent_from_library = False
@@ -58,19 +58,20 @@ class Store:
         :return:
         """
 
-        # By default, no shows are ignored
-        ignored_shows = {}
-
         # Update our internal list of ignored shows if there are any...
         if os.path.exists(Store.ignored_shows_file):
             log("Loading ignored shows from config file: " + Store.ignored_shows_file)
             with open(Store.ignored_shows_file, 'r') as yaml_file:
-                Store.ignored_shows = yaml.load(yaml_file)
+                Store.ignored_shows = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
-        log(f'Ignored Shows, loaded from yaml file, is: {ignored_shows}')
+        log(f'Ignored Shows, loaded from yaml file, is: {Store.ignored_shows}')
 
     @staticmethod
     def write_ignored_shows_to_config(ignored_shows, tv_show_title=None, tv_show_id=None):
+
+        # If no ignores shows yet, make an empty list...
+        if not ignored_shows:
+            ignored_shows = {}
 
         # Add new show to our dict of ignored shows if there is one...
         if tv_show_id:
@@ -83,5 +84,5 @@ class Store:
 
         # ...and dump the whole dict to our yaml file (clobber over any old file)
         with open(Store.ignored_shows_file, 'w') as yaml_file:
-            log("Ignored Shows to write to config is: " + str(ignored_shows))
+            log(f'Ignored Shows to write to config is: {ignored_shows}')
             yaml.dump(ignored_shows, yaml_file, default_flow_style=False)

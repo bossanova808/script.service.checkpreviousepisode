@@ -56,10 +56,10 @@ def run(args):
     :return:
     """
     footprints()
-    # load settings and create the store for our globals
-    config = Store()
+    # Initialiase the global store and load the addon settings
+    Store()
 
-    # TWO RUNMODES - we're either running as a service, or we're running the tool to manage ignored shows..
+    # TWO RUN-MODES - we're either running as a service, or we're running the tool to manage ignored shows..
 
     # MANAGE IGNORED SHOWS
     if len(args) > 1:

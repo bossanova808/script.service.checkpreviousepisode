@@ -107,9 +107,9 @@ else:
     def get_property(window, name):
         """
         Return the value of a window property
-        @param window:
-        @param name:
-        @return:
+        :param window: the Kodi window to get the property value from
+        :param name: the name of the property to get
+        :return: the value of the window property
         """
         return window.getProperty(name)
 
@@ -117,19 +117,20 @@ else:
     def get_property_as_bool(window, name):
         """
         Return the value of a window property as a boolean
-        @param window:
-        @param name:
-        @return:
+        :param window: the Kodi window to get the property value from
+        :param name: the name of the property to get
+        :return: the value of the window property in boolean form
         """
         return window.getProperty(name).lower() == "true"
 
 
     def send_kodi_json(human_description, json_string):
         """
-        Send a JSON command to Kodi, logging the human description, command, and result returned.
+        Send a JSON command to Kodi, logging the human description, command, and result as returned.
 
         :param human_description: Required. A human sensible description of what the command is aiming to do/retrieve.
         :param json_string: Required. The json command to send.
+        :return the json object loaded from the result string
         """
         log(f'KODI JSON RPC command: {human_description} [{json_string}]')
         result = xbmc.executeJSONRPC(json_string)
@@ -141,8 +142,8 @@ else:
         """
         Helper function to get string type from settings
 
-        @param setting:
-        @return: setting value
+        :param setting: The addon setting to return
+        :return: the setting value
         """
         return ADDON.getSetting(setting).strip()
 
@@ -151,8 +152,8 @@ else:
         """
         Helper function to get bool type from settings
 
-        @param setting:
-        @return: setting value as boolen
+        :param setting: The addon setting to return
+        :return: the setting value as boolean
         """
         return get_setting(setting).lower() == "true"
 
@@ -161,10 +162,10 @@ else:
         """
         Send a notification to the user via the Kodi GUI
 
-        @param message: the message to send
-        @param notification_type: xbmcgui.NOTIFICATION_ERROR (default), xbmcgui.NOTIFICATION_WARNING, or xbmcgui.NOTIFICATION_INFO
-        @param duration: time to display notification in milliseconds, default 5000
-        @return: None
+        :param message: the message to send
+        :param notification_type: xbmcgui.NOTIFICATION_ERROR (default), xbmcgui.NOTIFICATION_WARNING, or xbmcgui.NOTIFICATION_INFO
+        :param duration: time to display notification in milliseconds, default 5000
+        :return: None
         """
         dialog = xbmcgui.Dialog()
 
@@ -178,7 +179,7 @@ else:
         Helper function to return Kodi player state.
         (Odd this is needed, it should be a testable state on Player really..)
 
-        :return: bool
+        :return: boolean indicating player paused state
         """
         return bool(xbmc.getCondVisibility("Player.Paused"))
 

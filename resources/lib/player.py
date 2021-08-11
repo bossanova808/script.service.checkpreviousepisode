@@ -21,8 +21,6 @@ class KodiPlayer(xbmc.Player):
         """
         log('onAVStarted')
 
-        ignored_shows = Store.ignored_shows
-
         command = json.dumps({
             "jsonrpc": "2.0",
             "id": 1,
@@ -94,16 +92,16 @@ class KodiPlayer(xbmc.Player):
                                     playcount += episode['playcount']
                                     found = True
 
-                            log(f'Found: {found} playcount: {playcount}')
+                            log(f'Found: {found}, playcount: {playcount}')
 
                             if (not found and not Store.ignore_if_absent_from_library) or (found and playcount == 0):
 
-                                if playing_tvshowid in Store.ignored_shows:
+                                if Store.ignored_shows and playing_tvshowid in Store.ignored_shows:
                                     log(f'Unplayed previous episode detected, but {playing_tvshow_title} set to ignore')
                                 else:
                                     # Only trigger the pause if the player is actually playing as other addons may also have paused the player
                                     if not is_playback_paused():
-                                        log("Pausing playback")
+                                        log("Prior episode not watched! -> pausing playback")
                                         self.pause()
 
                                     result = xbmcgui.Dialog().select(LANGUAGE(32020), [LANGUAGE(32021), LANGUAGE(32022), LANGUAGE(32023)], preselect=0)
@@ -114,7 +112,7 @@ class KodiPlayer(xbmc.Player):
 
                                     if result == 1 or result == 2:
                                         if is_playback_paused():
-                                            log("Unpausing playback")
+                                            log("Unpausing playback due to user input")
                                             self.pause()
                                     else:
                                         self.stop()
