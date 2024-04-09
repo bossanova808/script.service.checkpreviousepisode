@@ -59,9 +59,6 @@ def run(args):
     # Initialise the global store and load the addon settings
     config = Store()
 
-    # Property add for skinning, per Hitcher's request - https://forum.kodi.tv/showthread.php?tid=355464&pid=3191615#pid3191615
-    HOME_WINDOW.set_property("CheckPreviousEpisode", "CheckPreviousEpisode")
-
     # TWO RUN-MODES - we're either running as a service, or we're running the tool to manage ignored shows..
 
     # MANAGE IGNORED SHOWS
