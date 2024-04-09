@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Handy utility functions for Kodi Addons
+Handy utility functions & constants for Kodi Addons
 By bossanova808
 Free in all senses....
-VERSION 0.2.4 2021-08-10
+VERSION 0.2.5 2024-04-09
 (For Kodi Matrix & later)
+See: bossanova808 repo/latest.common/common.py for latest version & always copy back any changes there plud do a version & date bump!
 """
 import sys
 import traceback
@@ -51,6 +52,8 @@ from resources.lib.common import *
 """
 
 unit_testing = False
+
+# Testing outside of Kodi
 if not xbmc.getUserAgent():
 
     xbmc = None
@@ -65,6 +68,7 @@ if not xbmc.getUserAgent():
             print(f'EXCPT: {traceback.format_exc(exception_instance)}')
 
 
+# Running inside of Kodi
 else:
 
     def log(message, exception_instance=None, level=xbmc.LOGDEBUG):
