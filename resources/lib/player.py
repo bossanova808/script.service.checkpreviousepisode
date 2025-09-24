@@ -57,16 +57,16 @@ class KodiPlayer(xbmc.Player):
                     Logger.warning("An episode is playing, but it doesn't have an id, so can't check previous episode in Kodi library.")
                     return
 
-                Logger.info(f"A TV show episode is playing (id: {json_object['result']['item']['id']}).")
+                Logger.info(f"A TV show episode is playing (id: {episode_id}).")
 
                 command = json.dumps({
-                    "jsonrpc": "2.0",
-                    "id": 1,
-                    "method": "VideoLibrary.GetEpisodeDetails",
-                    "params": {
-                        "episodeid": json_object['result']['item']['id'],
-                        "properties": ["tvshowid", "showtitle", "season", "episode", "resume"]
-                    }
+                        "jsonrpc":"2.0",
+                        "id":1,
+                        "method":"VideoLibrary.GetEpisodeDetails",
+                        "params":{
+                                "episodeid":episode_id,
+                                "properties":["tvshowid", "showtitle", "season", "episode", "resume"]
+                        }
                 })
                 json_object = send_kodi_json("Get episode details", command)
 
@@ -116,8 +116,9 @@ class KodiPlayer(xbmc.Player):
                         if episodes:
                             for episode in episodes:
                                 if episode.get('episode') == (playing_episode - 1):
-                                    playcount += episode.get('playcount', 0) or 0
+                                    playcount = (episode.get('playcount', 0) or 0)
                                     found = True
+                                    break
 
                             Logger.info(f'Found previous episode: {found}, playcount: {playcount}, ignore if absent: {Store.ignore_if_episode_absent_from_library}')
                         else:

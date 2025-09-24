@@ -29,19 +29,18 @@ def manage_ignored():
 
     # OK, there are ignored shows in the list...
 
-    # Convert our dict to a sorted list for the dialog...
-    ignored_list = sorted(Store.ignored_shows.values(), key=lambda s:s.casefold())
+    # Build a sorted (id, title) list for stable mapping and to handle duplicate titles
+    sorted_pairs = sorted(Store.ignored_shows.items(), key=lambda kv:kv[1].casefold())
+    labels = [title for (_, title) in sorted_pairs]
 
-    if ignored_list:
-        selected = dialog.select(TRANSLATE(32062), ignored_list)
+    if labels:
+        selected = dialog.select(TRANSLATE(32062), labels)
         if selected != -1:
-            show_title = ignored_list[selected]
+            tvshow_id, show_title = sorted_pairs[selected]
             Logger.info("User has requested we stop ignoring: " + show_title)
             Logger.debug("Ignored shows before removal is: " + str(Store.ignored_shows))
-            # find the key (new_to_ignore_tv_show_id) for this show& remove from dict
-            key = list(Store.ignored_shows.keys())[list(Store.ignored_shows.values()).index(show_title)]
-            Store.ignored_shows.pop(key, None)
-            Logger.debug("Ignored shows  after removal is: " + str(Store.ignored_shows))
+            Store.ignored_shows.pop(tvshow_id, None)
+            Logger.debug("Ignored shows after removal is: " + str(Store.ignored_shows))
             Store.write_ignored_shows_to_config()
 
 
