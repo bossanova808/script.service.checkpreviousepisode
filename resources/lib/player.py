@@ -26,32 +26,34 @@ class KodiPlayer(xbmc.Player):
         """
         Logger.debug('onAVStarted')
 
+        # Get active players
         command = json.dumps({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "Player.GetActivePlayers",
+                "jsonrpc":"2.0",
+                "id":1,
+                "method":"Player.GetActivePlayers",
         })
         json_object = send_kodi_json("Get active players", command)
 
-        # Only do something is we get a result for our query back from Kodi
-        if len(json_object['result']) == 1:
+        active_players = json_object.get('result') or []
+        if len(active_players) == 1:
 
-            Logger.debug(f"Player running with ID: {json_object['result'][0]['playerid']}")
+            playerid = active_players[0].get('playerid')
+            Logger.debug(f"Player running with ID: {playerid}")
 
             command = json.dumps({
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "Player.GetItem",
-                "params": {
-                    "playerid": json_object['result'][0]['playerid']
-                }
+                    "jsonrpc":"2.0",
+                    "id":1,
+                    "method":"Player.GetItem",
+                    "params":{"playerid":playerid},
             })
             json_object = send_kodi_json("Get playing item", command)
 
-            # Only do something is this is an episode of a TV show
-            if json_object['result']['item']['type'] == 'episode':
+            item = json_object.get('result', {}).get('item', {})
+            # Only do something if this is an episode of a TV show
+            if item.get('type') == 'episode':
 
-                if 'id' not in json_object['result']['item']:
+                episode_id = item.get('id')
+                if not episode_id:
                     Logger.warning("An episode is playing, but it doesn't have an id, so can't check previous episode in Kodi library.")
                     return
 
@@ -106,16 +108,18 @@ class KodiPlayer(xbmc.Player):
                         json_object = send_kodi_json("Get episodes for season", command)
 
                         episodes = json_object.get('result', {}).get('episodes', [])
+
+                        # Defaults
+                        found = False
+                        playcount = 0
+
                         if episodes:
-                            found = False
-                            playcount = 0
                             for episode in episodes:
                                 if episode.get('episode') == (playing_episode - 1):
                                     playcount += episode.get('playcount', 0) or 0
                                     found = True
 
                             Logger.info(f'Found previous episode: {found}, playcount: {playcount}, ignore if absent: {Store.ignore_if_episode_absent_from_library}')
-
                         else:
                             # No episodes returned by Kodi for this season
                             if Store.ignore_if_episode_absent_from_library:
@@ -125,46 +129,50 @@ class KodiPlayer(xbmc.Player):
                             found = False
                             playcount = 0
 
-                            # If we couldn't find the previous episode in the library,
-                            # OR we have found the previous episode AND it is unwatched...
-                            if not found or playcount == 0:
+                        # If we couldn't find the previous episode in the library,
+                        # OR we have found the previous episode AND it is unwatched...
+                        if not found or playcount == 0:
 
-                                # Only trigger the pause if the player is actually playing as other addons may also have paused the player
-                                if not is_playback_paused():
-                                    Logger.info("Prior episode not watched! -> pausing playback")
+                            # Only trigger the pause if the player is actually playing as other addons may also have paused the player
+                            if not is_playback_paused():
+                                Logger.info("Prior episode not watched! -> pausing playback")
+                                self.pause()
+
+                            # Set a window property per Hitcher's request - https://forum.kodi.tv/showthread.php?tid=355464&pid=3191615#pid3191615
+                            HOME_WINDOW.setProperty("CheckPreviousEpisode", "MissingPreviousEpisode")
+                            result = xbmcgui.Dialog().select(
+                                    TRANSLATE(32020),
+                                    [TRANSLATE(32021), TRANSLATE(32022), TRANSLATE(32023)],
+                                    preselect=0
+                            )
+                            HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
+
+                            # User has requested we ignore this particular show from now on...
+                            if result == 2:
+                                Logger.info(f"User has requested we ignore ({playing_tvshowid}) {playing_tvshow_title} from now on.")
+                                Store.write_ignored_shows_to_config(playing_tvshow_title, playing_tvshowid)
+
+                            if result == 1 or result == 2:
+                                if is_playback_paused():
+                                    Logger.info(f"Unpausing playback due to user input ({result})")
                                     self.pause()
+                            else:
+                                Logger.info(f"Stopping playback due to user input ({result})")
+                                self.stop()
 
-                                # Set a window property per Hitcher's request - https://forum.kodi.tv/showthread.php?tid=355464&pid=3191615#pid3191615
-                                HOME_WINDOW.setProperty("CheckPreviousEpisode", "MissingPreviousEpisode")
-                                result = xbmcgui.Dialog().select(TRANSLATE(32020), [TRANSLATE(32021), TRANSLATE(32022), TRANSLATE(32023)], preselect=0)
-                                HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
+                                if Store.force_browse:
+                                    Logger.info("Force browsing to show/season, as per user configuration")
+                                    # Special case is the user wants to go to the All Seasons view
+                                    if Store.force_all_seasons:
+                                        playing_season = -1
 
-                                # User has requested we ignore this particular show from now on...
-                                if result == 2:
-                                    Logger.info(f"User has requested we ignore ({playing_tvshowid}) {playing_tvshow_title} from now on.")
-                                    Store.write_ignored_shows_to_config(playing_tvshow_title, playing_tvshowid)
-
-                                if result == 1 or result == 2:
-                                    if is_playback_paused():
-                                        Logger.info(f"Unpausing playback due to user input ({result})")
-                                        self.pause()
-                                else:
-                                    Logger.info(f"Stopping playback due to user input ({result})")
-                                    self.stop()
-
-                                    if Store.force_browse:
-                                        Logger.info("Force browsing to show/season, as per user configuration")
-                                        # Special case is the user wants to go to the All Seasons view
-                                        if Store.force_all_seasons:
-                                            playing_season = -1
-
-                                        command = json.dumps({
-                                            "jsonrpc": "2.0",
-                                            "id": 1,
-                                            "method": "GUI.ActivateWindow",
-                                            "params": {
-                                                "window": "videos",
-                                                "parameters": [f'videodb://tvshows/titles/{playing_tvshowid}/{playing_season}'],
+                                    command = json.dumps({
+                                            "jsonrpc":"2.0",
+                                            "id":1,
+                                            "method":"GUI.ActivateWindow",
+                                            "params":{
+                                                    "window":"videos",
+                                                    "parameters":[f'videodb://tvshows/titles/{playing_tvshowid}/{playing_season}'],
                                             }
-                                        })
-                                        send_kodi_json(f'Browse to {playing_tvshow_title}', command)
+                                    })
+                                    send_kodi_json(f'Browse to {playing_tvshow_title}', command)
