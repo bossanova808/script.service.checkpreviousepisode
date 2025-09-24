@@ -30,7 +30,10 @@ def manage_ignored():
     # OK, there are ignored shows in the list...
 
     # Build a sorted (id, title) list for stable mapping and to handle duplicate titles
-    sorted_pairs = sorted(Store.ignored_shows.items(), key=lambda kv:kv[1].casefold())
+    sorted_pairs = sorted(
+            Store.ignored_shows.items(),
+            key=lambda kv:((kv[1] or '').casefold(), str(kv[0]))
+    )
     labels = [title for (_, title) in sorted_pairs]
 
     if labels:
@@ -67,9 +70,9 @@ def run(args):
             # Keep instance alive to receive Kodi player events
             _kodi_player = KodiPlayer()
 
-            while not kodi_event_monitor.abortRequested():
-                if kodi_event_monitor.waitForAbort(1):
-                    Logger.debug('Abort Requested')
-                    break
+            while not kodi_event_monitor.waitForAbort(1):
+                pass
+            Logger.debug('Abort Requested')
+
     finally:
         Logger.stop()
