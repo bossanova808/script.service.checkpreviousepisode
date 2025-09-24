@@ -1,5 +1,6 @@
-from bossanova808.utilities import *
-from bossanova808.constants import *
+import xbmcgui
+
+from bossanova808.constants import TRANSLATE
 from bossanova808.logger import Logger
 from bossanova808.notify import Notify
 # noinspection PyPackages
@@ -8,8 +9,6 @@ from .store import Store
 from .monitor import KodiEventMonitor
 # noinspection PyPackages
 from .player import KodiPlayer
-import xbmc
-import os
 
 
 def manage_ignored():
@@ -25,7 +24,7 @@ def manage_ignored():
 
     # Short circuit if no ignored shows, so nothing to manage...
     if len(Store.ignored_shows) < 1:
-        Notify.info(LANGUAGE(32060), 5000)
+        Notify.info(TRANSLATE(32060), 5000)
         return
 
     # OK, there are ignored shows in the list...
@@ -36,7 +35,7 @@ def manage_ignored():
         ignored_list.append(value)
 
     if ignored_list:
-        selected = dialog.select(LANGUAGE(32062), ignored_list)
+        selected = dialog.select(TRANSLATE(32062), ignored_list)
         if selected != -1:
             show_title = ignored_list[selected]
             Logger.info("User has requested we stop ignoring: " + show_title)
@@ -54,7 +53,7 @@ def run(args):
 
     :return:
     """
-    footprints()
+    Logger.start()
     # Initialise the global store and load the addon settings
     Store()
 
@@ -68,13 +67,14 @@ def run(args):
     # DEFAULT - RUN AS A SERVICE & WATCH PLAYBACK EVENTS
     else:
         Logger.info("Listening to onAvStarted for episode playback.")
-        Store.kodi_event_monitor = KodiEventMonitor(xbmc.Monitor)
-        Store.kodi_player = KodiPlayer(xbmc.Player)
+        Store.kodi_event_monitor = KodiEventMonitor()
+        Store.kodi_player = KodiPlayer()
 
         while not Store.kodi_event_monitor.abortRequested():
-            # Sleep/wait for abort for 10 seconds
+            # Sleep/wait for abort
             if Store.kodi_event_monitor.waitForAbort(1):
                 # Abort was requested while waiting. We should exit
+                Logger.debug('Abort Requested')
                 break
 
-    footprints(False)
+    Logger.stop()

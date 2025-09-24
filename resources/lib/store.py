@@ -1,10 +1,10 @@
 import os
 import yaml
-from bossanova808.logger import Logger
-from bossanova808.constants import *
-from bossanova808.utilities import *
-import xbmc
 import xbmcvfs
+
+from bossanova808.constants import PROFILE
+from bossanova808.utilities import get_setting_as_bool
+from bossanova808.logger import Logger
 
 
 class Store:

@@ -1,9 +1,12 @@
+import json
+import xbmc
+import xbmcgui
+
+from bossanova808.constants import TRANSLATE, HOME_WINDOW
+from bossanova808.utilities import send_kodi_json, is_playback_paused
 from bossanova808.logger import Logger
-from bossanova808.utilities import *
 # noinspection PyPackages
 from .store import Store
-import xbmc
-import json
 
 
 class KodiPlayer(xbmc.Player):
@@ -11,8 +14,8 @@ class KodiPlayer(xbmc.Player):
     This class represents/monitors the Kodi video player
     """
 
-    def __init__(self, *args):
-        xbmc.Player.__init__(self)
+    def __init__(self):
+        super().__init__()
         Logger.debug('KodiPlayer __init__')
 
     def onAVStarted(self):
@@ -129,7 +132,7 @@ class KodiPlayer(xbmc.Player):
 
                                 # Set a window property per Hitcher's request - https://forum.kodi.tv/showthread.php?tid=355464&pid=3191615#pid3191615
                                 HOME_WINDOW.setProperty("CheckPreviousEpisode", "MissingPreviousEpisode")
-                                result = xbmcgui.Dialog().select(LANGUAGE(32020), [LANGUAGE(32021), LANGUAGE(32022), LANGUAGE(32023)], preselect=0)
+                                result = xbmcgui.Dialog().select(TRANSLATE(32020), [TRANSLATE(32021), TRANSLATE(32022), TRANSLATE(32023)], preselect=0)
                                 HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
 
                                 # User has requested we ignore this particular show from now on...
