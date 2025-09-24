@@ -12,9 +12,9 @@ You can mark shows where episode order doesn't matter as shows to be ignored (an
 
 If it detects you've started playback of an episode you probably shouldn't have, the video will be paused, and you'll get a pop up window with options to stop playback, carry on on this occasion, or carry on and also mark the show as one to ignore from now on.
 
-Skinners can even skin the select dialogue by listening to a Window property `CheckPreviousEpisode` which is set to `MissingPreviousEpisode` when the select dialogue is showing (search the [Confluence repo](https://github.com/xbmc/skin.confluence)) for `CheckPreviousEpisode` for an example of how this can be done).
+Skinners can even skin the select dialogue by listening to a Window property `CheckPreviousEpisode` which is set to `MissingPreviousEpisode` when the select dialogue is showing (search the [Confluence repo](https://github.com/xbmc/skin.confluence) for `CheckPreviousEpisode` for an example of how this can be done).
 
-Support via the forum thread: <https://forum.kodi.tv/showthread.php?tid=355464>
+Support via the forum thread: <https://forum.kodi.tv/showthread.php?tid=355464>, or open an issue here.
 
 Available form  the main Kodi repository (legacy Python 2 version for Kodi Leia and below, Python 3 version for Kodi Matrix and on).
 
