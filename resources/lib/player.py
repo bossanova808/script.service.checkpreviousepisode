@@ -55,9 +55,9 @@ class KodiPlayer(xbmc.Player):
         # Only do something if this is an episode of a TV show
         if item.get('type') == 'episode':
 
-            episode_id = item.get('id')
+            episode_id = item.get('id') or item.get('episodeid')
             if not episode_id:
-                Logger.warning("An episode is playing, but it doesn't have an id, so can't check previous episode in Kodi library.")
+                Logger.warning("An episode is playing but no episode id was found; cannot check previous episode in the library.")
                 return
 
             Logger.info(f"A TV show episode is playing (id: {episode_id}).")
@@ -96,17 +96,17 @@ class KodiPlayer(xbmc.Player):
                     return
 
                 # We ignore first episodes...
-                if json_object['result']['episodedetails']['episode'] > 1:
+                if playing_episode > 1:
 
                     command = json.dumps({
-                        "jsonrpc": "2.0",
-                        "id": 1,
-                        "method": "VideoLibrary.GetEpisodes",
-                        "params": {
-                            "tvshowid": json_object['result']['episodedetails']['tvshowid'],
-                            "season": json_object['result']['episodedetails']['season'],
-                            "properties": ["episode", "playcount"]
-                        }
+                            "jsonrpc":"2.0",
+                            "id":1,
+                            "method":"VideoLibrary.GetEpisodes",
+                            "params":{
+                                    "tvshowid":playing_tvshowid,
+                                    "season":playing_season,
+                                    "properties":["episode", "playcount"]
+                            }
                     })
                     json_object = send_kodi_json("Get episodes for season", command)
 
@@ -144,15 +144,19 @@ class KodiPlayer(xbmc.Player):
 
                         # Set a window property per Hitcher's request - https://forum.kodi.tv/showthread.php?tid=355464&pid=3191615#pid3191615
                         HOME_WINDOW.setProperty("CheckPreviousEpisode", "MissingPreviousEpisode")
-                        result = xbmcgui.Dialog().select(
-                                TRANSLATE(32020),
-                                [TRANSLATE(32021), TRANSLATE(32022), TRANSLATE(32023)],
-                                preselect=0
-                        )
-                        HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
+                        try:
+                            result = xbmcgui.Dialog().select(
+                                    TRANSLATE(32020),
+                                    [TRANSLATE(32021), TRANSLATE(32022), TRANSLATE(32023)],
+                                    preselect=0
+                            )
+                        finally:
+                            HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
 
                         if result == -1:
-                            Logger.info("User cancelled; leaving playback paused.")
+                            Logger.info("User cancelled; resuming playback.")
+                            if is_playback_paused():
+                                self.pause()
                             return
 
                         if result == 2:

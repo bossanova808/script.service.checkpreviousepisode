@@ -65,7 +65,7 @@ def run(args):
             manage_ignored()
         # DEFAULT - RUN AS A SERVICE & WATCH PLAYBACK EVENTS
         else:
-            Logger.info("Listening to onAvStarted for episode playback.")
+            Logger.info("Listening to onAVStarted for episode playback.")
             kodi_event_monitor = KodiEventMonitor()
             # Keep instance alive to receive Kodi player events
             _kodi_player = KodiPlayer()
