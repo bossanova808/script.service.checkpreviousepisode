@@ -43,9 +43,6 @@ class KodiPlayer(xbmc.Player):
             Logger.debug("Player is not a video player")
             return
 
-        playerid = active_players[0].get('playerid')
-        Logger.debug(f"Player running with ID: {playerid}")
-
         command = json.dumps({
                 "jsonrpc":"2.0",
                 "id":1,
@@ -154,10 +151,14 @@ class KodiPlayer(xbmc.Player):
                         )
                         HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
 
-                        # User has requested we ignore this particular show from now on...
+                        if result == -1:
+                            Logger.info("User cancelled; leaving playback paused.")
+                            return
+
                         if result == 2:
                             Logger.info(f"User has requested we ignore ({playing_tvshowid}) {playing_tvshow_title} from now on.")
                             Store.write_ignored_shows_to_config(playing_tvshow_title, playing_tvshowid)
+                            # fall through to unpause
 
                         if result == 1 or result == 2:
                             if is_playback_paused():
