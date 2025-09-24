@@ -69,13 +69,14 @@ class KodiPlayer(xbmc.Player):
                 json_object = send_kodi_json("Get episode details", command)
 
                 # Only do something if we can get the episode details from Kodi
-                if len(json_object['result']) == 1:
-
-                    playing_tvshowid = json_object['result']['episodedetails']['tvshowid']
-                    playing_tvshow_title = json_object['result']['episodedetails']['showtitle']
-                    playing_season = json_object['result']['episodedetails']['season']
-                    playing_episode = json_object['result']['episodedetails']['episode']
-                    resume_point = json_object['result']['episodedetails']['resume']['position']
+                episodedetails = json_object.get('result', {}).get('episodedetails')
+                if episodedetails:
+                    playing_tvshowid = episodedetails.get('tvshowid')
+                    playing_tvshow_title = episodedetails.get('showtitle')
+                    playing_season = episodedetails.get('season')
+                    playing_episode = episodedetails.get('episode')
+                    resume = episodedetails.get('resume') or {}
+                    resume_point = resume.get('position') or 0.0
 
                     Logger.info(f'Playing - title: {playing_tvshow_title} , id: {playing_tvshowid} , season: {playing_season}, episode: {playing_episode}, resume: {resume_point}')
 
@@ -104,26 +105,29 @@ class KodiPlayer(xbmc.Player):
                         })
                         json_object = send_kodi_json("Get episodes for season", command)
 
-                        # We found some episodes for this show...
-                        if len(json_object['result']) > 0:
+                        episodes = json_object.get('result', {}).get('episodes', [])
+                        if episodes:
                             found = False
                             playcount = 0
-                            for episode in json_object['result']['episodes']:
-                                if episode['episode'] == (playing_episode - 1):
-                                    playcount += episode['playcount']
+                            for episode in episodes:
+                                if episode.get('episode') == (playing_episode - 1):
+                                    playcount += episode.get('playcount', 0) or 0
                                     found = True
 
                             Logger.info(f'Found previous episode: {found}, playcount: {playcount}, ignore if absent: {Store.ignore_if_episode_absent_from_library}')
 
-                            # If we couldn't find the previous episode in the library
-                            # AND the user has asked us to ignore this, we're done.
-                            if not found and Store.ignore_if_episode_absent_from_library:
-                                Logger.info("Previous episode was not found in library, and setting ignore if absent from library is true, so allowing.")
+                        else:
+                            # No episodes returned by Kodi for this season
+                            if Store.ignore_if_episode_absent_from_library:
+                                Logger.info("Previous episode not found in library listing and user has opted to ignore; allowing.")
                                 return
+                            # Treat as 'not found' and continue to prompt/pause path
+                            found = False
+                            playcount = 0
 
                             # If we couldn't find the previous episode in the library,
                             # OR we have found the previous episode AND it is unwatched...
-                            if not found or (found and playcount == 0):
+                            if not found or playcount == 0:
 
                                 # Only trigger the pause if the player is actually playing as other addons may also have paused the player
                                 if not is_playback_paused():

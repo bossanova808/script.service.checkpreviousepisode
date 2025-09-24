@@ -29,10 +29,8 @@ def manage_ignored():
 
     # OK, there are ignored shows in the list...
 
-    # Convert our dict to a list for the dialog...
-    ignored_list = []
-    for key, value in list(Store.ignored_shows.items()):
-        ignored_list.append(value)
+    # Convert our dict to a sorted list for the dialog...
+    ignored_list = sorted(Store.ignored_shows.values(), key=lambda s:s.casefold())
 
     if ignored_list:
         selected = dialog.select(TRANSLATE(32062), ignored_list)
@@ -53,28 +51,26 @@ def run(args):
 
     :return:
     """
-    Logger.start()
-    # Initialise the global store and load the addon settings
-    Store()
+    try:
+        Logger.start()
+        # Initialise the global store and load the addon settings
+        Store()
 
-    # TWO RUN-MODES - we're either running as a service, or we're running the tool to manage ignored shows...
+        # TWO RUN-MODES - we're either running as a service, or we're running the tool to manage ignored shows...
 
-    # MANAGE IGNORED SHOWS
-    if len(args) > 1:
-        if args[1].startswith('ManageIgnored'):
+        # MANAGE IGNORED SHOWS
+        if len(args) > 1 and args[1].startswith('ManageIgnored'):
             manage_ignored()
+        # DEFAULT - RUN AS A SERVICE & WATCH PLAYBACK EVENTS
+        else:
+            Logger.info("Listening to onAvStarted for episode playback.")
+            kodi_event_monitor = KodiEventMonitor()
+            # noinspection PyUnusedLocal
+            kodi_player = KodiPlayer()
 
-    # DEFAULT - RUN AS A SERVICE & WATCH PLAYBACK EVENTS
-    else:
-        Logger.info("Listening to onAvStarted for episode playback.")
-        Store.kodi_event_monitor = KodiEventMonitor()
-        Store.kodi_player = KodiPlayer()
-
-        while not Store.kodi_event_monitor.abortRequested():
-            # Sleep/wait for abort
-            if Store.kodi_event_monitor.waitForAbort(1):
-                # Abort was requested while waiting. We should exit
-                Logger.debug('Abort Requested')
-                break
-
-    Logger.stop()
+            while not kodi_event_monitor.abortRequested():
+                if kodi_event_monitor.waitForAbort(1):
+                    Logger.debug('Abort Requested')
+                    break
+    finally:
+        Logger.stop()
