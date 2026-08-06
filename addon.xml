@@ -7,7 +7,7 @@
   </requires>
   <extension library="default.py" point="xbmc.service" />
   <extension point="xbmc.addon.metadata">
-    <summary lang="en_GB">Kodi Check Previous Episode</summary>
+    <summary lang="en_GB">Check Previous Episode</summary>
     <summary lang="bg_BG">Изгледан ли е предходния епизод</summary>
     <summary lang="sv_SE">Kontrollera tidigare avsnitt för Kodi</summary>
     <description lang="en_GB">This service helps prevent spoilers by checking if the previous episode in a series has been watched. If not, it will pause playback and warn you.  Specific shows can be marked to be ignored if episode order does not matter.</description>
