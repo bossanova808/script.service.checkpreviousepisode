@@ -3,7 +3,7 @@ import xbmc
 import xbmcgui
 
 from bossanova808.constants import TRANSLATE, HOME_WINDOW
-from bossanova808.utilities import send_kodi_json, is_playback_paused
+from bossanova808.utilities import send_kodi_json, is_playback_paused, set_property, clear_property
 from bossanova808.logger import Logger
 # noinspection PyPackages
 from .store import Store
@@ -143,7 +143,7 @@ class KodiPlayer(xbmc.Player):
                             self.pause()
 
                         # Set a window property per Hitcher's request - https://forum.kodi.tv/showthread.php?tid=355464&pid=3191615#pid3191615
-                        HOME_WINDOW.setProperty("CheckPreviousEpisode", "MissingPreviousEpisode")
+                        set_property(HOME_WINDOW, "CheckPreviousEpisode", "MissingPreviousEpisode")
                         try:
                             result = xbmcgui.Dialog().select(
                                     TRANSLATE(32020),
@@ -151,7 +151,7 @@ class KodiPlayer(xbmc.Player):
                                     preselect=0
                             )
                         finally:
-                            HOME_WINDOW.setProperty("CheckPreviousEpisode", "")
+                            clear_property(HOME_WINDOW, "CheckPreviousEpisode")
 
                         if result == -1:
                             Logger.info("User cancelled; resuming playback.")
