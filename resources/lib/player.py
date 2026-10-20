@@ -85,8 +85,9 @@ class KodiPlayer(xbmc.Player):
 
                 Logger.info(f'Playing - title: {playing_tvshow_title} , id: {playing_tvshowid} , season: {playing_season}, episode: {playing_episode}, resume: {resume_point}')
 
-                # Is show set to be ignored?
-                if Store.ignored_shows and playing_tvshowid in Store.ignored_shows:
+                # Is show set to be ignored?  (Reload first - the list can be changed from settings, a separate process)
+                Store.ignored_shows.load()
+                if Store.ignored_shows.contains(playing_tvshowid):
                     Logger.info(f'Show {playing_tvshow_title} set to ignore, so allowing.')
                     return
 
@@ -161,7 +162,7 @@ class KodiPlayer(xbmc.Player):
 
                         if result == 2:
                             Logger.info(f"User has requested we ignore ({playing_tvshowid}) {playing_tvshow_title} from now on.")
-                            Store.write_ignored_shows_to_config(playing_tvshow_title, playing_tvshowid)
+                            Store.add_ignored_show(playing_tvshow_title, playing_tvshowid)
                             # fall through to unpause
 
                         if result == 1 or result == 2:
